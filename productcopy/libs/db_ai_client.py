@@ -3,7 +3,7 @@ import json
 from dotenv import load_dotenv
 import os
 import logging
-import pandas as pd
+
 
 
 # https://docs.databricks.com/en/large-language-models/llm-serving-intro.html
@@ -16,11 +16,12 @@ load_dotenv()
 class DBAIClient():
     def __init__(self):
         # Access an environment variable
-        self.dbtoken = os.getenv('DATABRICKS_TOKEN')
+        self.dbtoken = os.environ.get('DATABRICKS_TOKEN')
         self.db_workspace = os.environ.get('DATABRICKS_WORKSPACE')
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
         self.logger = logging.getLogger()
         self.endpoint_url = f"https://{self.db_workspace}/serving-endpoints/databricks-dbrx-instruct/invocations"
+        self.ittm_api_endpoint = os.environ.get('ITTM_ENDPOINT') 
         self.reset_messages()
 
     def send_chat(self):
@@ -31,29 +32,12 @@ class DBAIClient():
         self.logger.info(f"Response Text: {response.text}")
         return json.loads(response.content.decode('utf-8'))
 
-    def compile_message(self, model_forecasts, model_eval, sku):
-        forecast_pdf = pd.DataFrame(model_forecasts)
-
-        # Get trend alerts
-        yhat_above_upper = forecast_pdf[forecast_pdf['y'] > forecast_pdf['yhat_upper']]
-        yhat_below_lower = forecast_pdf[forecast_pdf['y'] < forecast_pdf['yhat_lower']]
-        num_upper_alerts = str(len(yhat_above_upper))
-        num_lower_alerts = str(len(yhat_below_lower))
-
-        rmse = model_eval[0].get('rmse')
-        mae = model_eval[0].get('mae')
-        mse = model_eval[0].get('mse')
-
-        msg = f"We have observed that there are {num_upper_alerts} occurences where the y value was above the upper threshold (yhat_upper) and {num_lower_alerts} occurrences where the y value was below the lower threshold (yhat_lower). Additionally, the {sku} sku has the following metrics: MAE = {mae}, RMSE = {rmse}, and MSE = {mse}"
-
-
-
-
+    def compile_message(self, itt_results, user_inputs):
+        msg = f'gender: {user_inputs.get("gender")}, productType: {user_inputs.get("productType")}, colour: {user_inputs.get("colour")}, subcategory: {user_inputs.get("subcategory")}, usage: {user_inputs.get("usage")}, product_title: {user_inputs.get("product_title")}, description: "{itt_results}" '
         return ('user', msg)
 
-    def add_message(self, model_forecasts, model_eval, sku):
-        role, text = self.compile_message(model_forecasts, model_eval, sku)
-        
+    def add_message(self, itt_results, user_inputs):
+        role, text = self.compile_message(itt_results, user_inputs)
         msg = {
             "role": role,
             "content": text
@@ -65,8 +49,20 @@ class DBAIClient():
         self.messages = [
             {
             "role": "system",
-            "content": "We need a concise overview of the time series data with your statistical opinion and potential future trends. Do not provide recommendations to improve the model. Our focus should be on extracting key insights without overwhelming the reader. In this analysis, we'll primarily look at the observed (actual) values represented by 'y' and compare them with the model's predictions denoted by 'yhat'. Additionally, we'll examine the prediction interval, defined by 'yhat_lower' and 'yhat_upper', which indicates the range within which the predicted values are expected to fall with a certain level of confidence. Let's emphasize the significance of the Mean Absolute Error (MAE), Mean Squared Error (MSE), and Root Mean Squared Error (RMSE) metrics. These metrics quantify the discrepancies between predicted and actual values, providing essential insights into the performance of our model. MAE captures the average magnitude of errors, MSE measures the average squared differences, and RMSE serves as a measure of the standard deviation of the residuals. Do not ask any follow up questions. If you use bullet points, please do so with '-'. "
+            "content": "You are friendly, playful assistant providing a useful description of this product based on supplied characteristics. Keep your answers to 100 words or less. Do not use emojis in your response."
             }
         ]
 
+    def image_to_text_extract(self, content):
+        data = {'dataframe_records': [{'content': content}] }
 
+        # Make the POST request
+        response = requests.post(
+            self.ittm_api_endpoint,
+            auth=("token", self.dbtoken),
+            headers={"Content-Type": "application/json"},
+            json=data
+        )
+
+
+        return json.loads(response.content.decode('utf-8'))
