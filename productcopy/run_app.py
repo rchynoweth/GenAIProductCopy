@@ -114,9 +114,9 @@ def parse_contents(contents, filename):
     Output('graph-text', 'children'),  # Update the text below the graph
     [Input('upload-image', 'contents'), Input('submit-button', 'n_clicks'),Input('gender', 'value'),
         Input('category', 'value'), Input('subcategory', 'value'), Input('product-type', 'value'),
-        Input('colour', 'value'), Input('usage', 'value'), Input('product-title', 'value')] 
+        Input('colour', 'value'), Input('usage', 'value'), Input('product-title', 'value')], State('upload-image', 'filename'),
 )
-def update_text(list_of_contents, n_clicks, gender, category, subcategory, product_type, colour, usage, product_title):
+def update_text(list_of_contents, n_clicks, gender, category, subcategory, product_type, colour, usage, product_title, list_of_names):
     logger.info(f'Rendering New Text {n_clicks}')
 
     if n_clicks:
@@ -140,6 +140,13 @@ def update_text(list_of_contents, n_clicks, gender, category, subcategory, produ
         text = response.get('choices')[0].get('message').get('content')
         
         # save inputs and results to table in Databricks
+        filename = list_of_names[0]
+        file_path = db_file_client.get_file_path(filename=filename)
+        fields['image_path'] = file_path
+        fields['image_to_text_output'] = itt_description
+        fields['llm_description'] = text
+        db_conn.create_product_upload_table() # create table if not exists 
+        db_conn.insert_product_upload_data(fields=fields)
 
         return text
 
@@ -151,7 +158,7 @@ def update_text(list_of_contents, n_clicks, gender, category, subcategory, produ
               State('upload-image', 'filename'),
               State('upload-image', 'last_modified'))
 def update_output(list_of_contents, list_of_dates, list_of_names, n_clicks):
-    logger.log("Uploading image to cloud and displaying image. ")
+    logger.info("Uploading image to cloud and displaying image. ")
 
     if list_of_contents is not None:
         children = [

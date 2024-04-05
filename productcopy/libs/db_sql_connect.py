@@ -36,17 +36,38 @@ class DBSQLClient():
         return self.execute_query("SHOW SCHEMAS")
 
 
-    def get_model_eval(self, sku='ALL', table_name='dbu_forecast_evaluations'):
-        assert sku in ['ALL_PURPOSE', 'MODEL_INFERENCE','SQL','DLT','JOBS', 'ALL']
-        query_string = f"""
-            select sku, mae, rmse, mse
-            from {self.catalog_name}.{self.schema_name}.{table_name}
-            where sku = '{sku}'
-            """
-        
+    def create_product_upload_table(self):
+        sql_qry = f"""
+        create table if not exists {self.catalog_name}.{self.schema_name}.product_uploads (
+            image_to_text_output STRING,
+            image_path STRING,
+            llm_description STRING,
+            gender STRING,
+            category STRING,
+            subcategory STRING,
+            product_type STRING,
+            colour STRING,
+            usage STRING,
+            product_title STRING
+        ) 
+        """
+        return self.execute_query(query=sql_qry)
 
-        results = self.execute_query(query=query_string)
-        self.logger.info("Obtaining Evaluation Metrics")
-        return [{'sku': r.sku, 'mae': r.mae, 'rmse': r.rmse, 'mse': r.mse} for r in results]
 
-
+    def insert_product_upload_data(self, fields):
+        sql_qry = f"""
+        insert into {self.catalog_name}.{self.schema_name}.product_uploads (image_to_text_output, image_path, llm_description, gender, category, subcategory, product_type, colour, usage, product_title)
+        values (
+            "{fields.get('image_to_text_output')}",
+            "{fields.get('image_path')}",
+            "{fields.get('llm_description')}",
+            "{fields.get('gender')}",
+            "{fields.get('category')}",
+            "{fields.get('subcategory')}",
+            "{fields.get('product_type')}",
+            "{fields.get('colour')}",
+            "{fields.get('usage')}",
+            "{fields.get('product_title')}"
+        );
+        """
+        return self.execute_query(sql_qry)
