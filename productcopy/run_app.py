@@ -147,7 +147,7 @@ def update_text(list_of_contents, n_clicks, gender, category, subcategory, produ
         fields['llm_description'] = text
         db_conn.create_product_upload_table() # create table if not exists 
         db_conn.insert_product_upload_data(fields=fields)
-
+        db_ai_client.reset_messages()
         return text
 
 
