@@ -36,39 +36,6 @@ class DBSQLClient():
         return self.execute_query("SHOW SCHEMAS")
 
 
-    def get_forecast_values(self, sku='ALL', table_name='vw_dbu_forecasts'):
-        assert sku in ['ALL', 'ALL_PURPOSE', 'MODEL_INFERENCE','SQL','DLT','JOBS']
-        query_string = f"""
-            select date, sum(yhat) as yhat, sum(yhat_lower) as yhat_lower, sum(yhat_upper) as yhat_upper, sum(y) as y
-            from {self.catalog_name}.{self.schema_name}.{table_name}
-            """
-
-        query_string += " group by all"
-        query_string += " order by date desc"
-        
-
-        results = self.execute_query(query=query_string)
-        self.logger.info("Rendering Forecast Values")
-        return [{'Date': r.date, 'y': r.y, 'yhat': r.yhat, 'yhat_lower': r.yhat_lower, 'yhat_upper': r.yhat_upper} for r in results]
-
-
-
-    def get_actual_values(self, sku='ALL', table_name='vw_dbu_forecasts'):
-        assert sku in ['ALL', 'ALL_PURPOSE', 'MODEL_INFERENCE','SQL','DLT','JOBS']
-        query_string = f"""
-            select date, sum(y) as y
-            from {self.catalog_name}.{self.schema_name}.{table_name}
-            """
-
-        query_string += " group by all"
-        query_string += " order by date desc"
-        
-
-        results = self.execute_query(query=query_string)
-        self.logger.info("Rendering Actual Values")
-        return [{'Date': r.date, 'y': r.y} for r in results]
-    
-
     def get_model_eval(self, sku='ALL', table_name='dbu_forecast_evaluations'):
         assert sku in ['ALL_PURPOSE', 'MODEL_INFERENCE','SQL','DLT','JOBS', 'ALL']
         query_string = f"""

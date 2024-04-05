@@ -5,11 +5,6 @@ import os
 import logging
 
 
-
-# https://docs.databricks.com/en/large-language-models/llm-serving-intro.html
-# https://learn.microsoft.com/en-us/azure/databricks/machine-learning/foundation-models/api-reference
-# https://learn.microsoft.com/en-us/azure/databricks/machine-learning/foundation-models/api-reference#chat-message
-
 # Load environment variables from .env file
 load_dotenv()
 

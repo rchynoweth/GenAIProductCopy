@@ -15,33 +15,39 @@ You will need to have the following `.env` file to connect to Databricks from yo
 DATABRICKS_TOKEN=<PAT TOKEN>
 DATABRICKS_WORKSPACE=<Databricks Workspace URL> #adb-<workspaceid>.<##>.azuredatabricks.net
 WAREHOUSE_HTTP_PATH=<SQL Warehouse Path> # /sql/1.0/warehouses/<ID>
-DATABRICKS_CATALOG=<catalog with forecast data>
-DATABRICKS_SCHEMA=<schema with forecast data>
+DATABRICKS_CATALOG=<data catalog>
+DATABRICKS_SCHEMA=<data schema>
+ITTM_ENDPOINT=<image to text api endpoint on Databricks model serving>
 ```
 
 
-To run the application locally please execute the following commands. Please note that you will need to comment out the first two lines of the [__init__.py](timeseries_ai/libs/__init__.py) file as it is coupled with the Databricks job that requires PySpark and I do not install
+To run the application locally please execute the following commands. 
 ```
 # Create environment 
-conda create -n timeseriesai python=3.10
+conda create -n productcopy python=3.10
 
-conda activate timeseriesai
+conda activate productcopy
 
 # install requirements 
 pip install -r requirements.txt
 
 # change working directory and run application
-cd timeseries_ai
+cd productcopy
 
 python run_app.py
 ```
 
-
-1. Deploy to model serving APIs for image to text and the LLM
-1. The LLM can be tuned to stay "on brand" by providing existing product copy 
+The entire demo includes the following steps: 
+1. Ingest historical image data with product descriptions into a table 
+1. Using the ingested data, we can fine tune an LLM to "stay on brand" with product descriptions. 
+1. Deploy to model serving APIs for image to text and the Fine-tuned LLM
+1. Run Integration tests with APIs
+1. Run the Web Application. 
 
 
 ## Demo Inputs
+
+The following are simply samples with data to provide during demos. The images are available in the repository as well. 
 
 Image 31096  
 - gender: Boys
@@ -76,3 +82,13 @@ Image 24985
 - usage: Casual
 - name: United Colors of Benetton Kids Girls Pink Printed Top.
 - Generated description: "The image features a pink t-shirt with a black and white graphic design on the front. It is a women's t-shirt, suitable for casual wear."
+
+
+## Resources 
+
+Below are various resources I have found useful: 
+- https://docs.databricks.com/en/large-language-models/llm-serving-intro.html 
+- https://learn.microsoft.com/en-us/azure/databricks/machine-learning/foundation-models/api-reference 
+- https://learn.microsoft.com/en-us/azure/databricks/machine-learning/foundation-models/api-reference#chat-message 
+- https://docs.databricks.com/api/workspace/files/upload 
+- https://docs.databricks.com/en/machine-learning/model-serving/custom-models.html 
