@@ -7,6 +7,9 @@ This repository is an end to end demo of generating product descriptions based o
 
 For the purposes of this demo I have downloaded and unzipped the contents of the [e-commerce product images dataset](https://www.kaggle.com/datasets/vikashrajluhaniwal/fashion-images?resource=download) to an imgs directory. I have not tracked this in the repo, as it is meant for adhoc uploads. This is also in line with the accelerator mentioned previously. 
 
+Below is an example video of the resulting web application. 
+
+https://github.com/rchynoweth/GenAIProductCopy/assets/79483287/fb4876a0-76b1-499e-bbff-715a9879ddb0
 
 ## Install and Run Application 
 
