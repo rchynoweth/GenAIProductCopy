@@ -33,4 +33,3 @@ response = requests.post(
 json.loads(response.content.decode('utf-8'))
 
 response.status_code
-
