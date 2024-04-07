@@ -15,12 +15,22 @@
 
 # COMMAND ----------
 
+spark.conf.set("spark.databricks.delta.schema.autoMerge.enabled", "true")
+
+# COMMAND ----------
+
+# Only run this command once to unzip the files
 # %sh
 
 # cd /Volumes/rac_demo_catalog/productcopy_demo/ecomm_product_images/ # this is the path of the folder where the zip file resides
 # unzip /Volumes/rac_demo_catalog/productcopy_demo/ecomm_product_images/archive.zip 
 
 
+
+# COMMAND ----------
+
+dbrx_endpoint_url = f"<Databricks Workspace URL>/serving-endpoints/databricks-dbrx-instruct/invocations"
+dbtoken = "<PAT TOKEN - likely should just be secret>"
 
 # COMMAND ----------
 
@@ -37,6 +47,32 @@ spark.sql(f"use schema {schema_name}")
 
 # DBTITLE 1,Import Required Libraries
 from pyspark.sql.functions import *
+import json
+import requests
+
+# COMMAND ----------
+
+def get_description(gender, productType, colour, category, subcategory, usage, product_title):
+  messages = [
+              {
+              "role": "system",
+              "content": "You are friendly, playful assistant providing a useful description of this product based on supplied characteristics. Keep your answers to 100 words or less. Do not use emojis in your response."
+              }, 
+              {
+              "role": "user",
+              "content": f'gender: {gender}, productType: {productType}, colour: {colour}, subcategory: {subcategory}, category: {category}, usage: {usage}, product_title: {product_title}'
+            }
+          ]
+
+  payload = {"messages": messages}
+  headers = {"Content-Type": "application/json"}
+  response = requests.post(dbrx_endpoint_url, headers=headers, json=payload, auth=("token", dbtoken))
+  content = json.loads(response.content.decode('utf-8'))
+  return content.get('choices')[0].get('message').get('content')
+
+# COMMAND ----------
+
+desc_udf = udf(get_description)
 
 # COMMAND ----------
 
@@ -77,7 +113,9 @@ display(
 
 # MAGIC %md ##Step 2: Load Product Info
 # MAGIC
-# MAGIC We will now read the product information found in the *fashion.csv* file associated with this dataset:
+# MAGIC We will now read the product information found in the *fashion.csv* file associated with this dataset. 
+# MAGIC
+# MAGIC Notice that we are creating a description column using an LLM. Please keep in mind that this is a demo and we want a description field to "fine-tune" the LLM so in this case we are doing this. However, in a non-demo environment the descriptions would have been created by humans with specific intent and marketing language. 
 
 # COMMAND ----------
 
@@ -90,6 +128,7 @@ info = (
     .option("header", True)
     .option("delimiter", ",")
     .load(f"{data_path}/data/fashion.csv")
+    .withColumn('BaseProductDescription', desc_udf(col('Gender'), col('ProductType'), col('Colour'), col('Category'), col('Subcategory'), col('Usage'), col('ProductTitle')))
   ) 
 
 # display data
