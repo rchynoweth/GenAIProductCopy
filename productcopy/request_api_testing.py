@@ -2,8 +2,6 @@ import requests
 from dotenv import load_dotenv
 import os 
 import json
-from io import StringIO, BytesIO
-import pandas as pd
 import base64
 
 # Load environment variables from .env file
@@ -34,10 +32,5 @@ response = requests.post(
 
 json.loads(response.content.decode('utf-8'))
 
-from PIL import Image
+response.status_code
 
-# api code to get image not needed locally
-decoded_img_data = base64.b64decode(img_data_base64)
-decoded_img_data = base64.b64decode(data['inputs']['content'][0])
-image = Image.open(BytesIO(decoded_img_data))
-image.show()
