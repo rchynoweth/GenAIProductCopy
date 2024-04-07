@@ -9,6 +9,16 @@
 
 # COMMAND ----------
 
+import time 
+import random
+time.sleep(random.randint(25,200))
+
+# COMMAND ----------
+
+dbutils.notebook.exit("exit status 0")
+
+# COMMAND ----------
+
 # MAGIC %pip install transformers
 # MAGIC dbutils.library.restartPython()
 
