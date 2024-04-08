@@ -164,10 +164,6 @@ print(description)
 
 # MAGIC %md 
 # MAGIC ## Package solution for Model Serving
-# MAGIC
-# MAGIC With the ability of the model to extract a description from an image demonstrated, let's turn our attention to the definition of a function that will allow us to scale this process.  For this, we'll use a pandas UDF pattern that accepts grouped data.  In a later step, we will divide our data into relatively even groups in order to distribute the work across our Databricks cluster.
-# MAGIC
-# MAGIC To work in this mode, our function needs to accept a pandas dataframe containing one or more rows of data.  For each row in this dataframe, a function will be applied to extract the corresponding image.  The function will return a set of data with the image's key, *i.e.* path, and its description:
 
 # COMMAND ----------
 
@@ -240,7 +236,10 @@ class ImageToTextModel(mlflow.pyfunc.PythonModel):
 
 # COMMAND ----------
 
-ittm = ImageToTextModel()
+# maybe add an evaluation table here to compare the different descriptions. "MLflow Evaluation" for reference code. 
+
+# COMMAND ----------
+
 reqs = ["torch==2.0.1","transformers==4.38.1", "cloudpickle==2.0.0","accelerate>=0.25.0","torchvision==0.15.2","optimum==1.17.1"]
 content_list = ["This is image data as a string"]
 pdf = pd.DataFrame({'content': content_list})
@@ -250,8 +249,6 @@ api_output = "This is an image description"
 with mlflow.start_run(run_name = "rac_image_to_text_model"):
   model_name = 'rac_image_to_text_model'
   run = mlflow.active_run()
-  sample_input_data = spark.read.table('product_images').select('content')
-  # signature = infer_signature(sample_input_data, ittm.predict(None, sample_input_data.select('content').first()))
   signature = infer_signature(pdf, api_output, None)
   mlflow.pyfunc.log_model(
       artifact_path=model_name,
@@ -269,15 +266,8 @@ with mlflow.start_run(run_name = "rac_image_to_text_model"):
 
 # COMMAND ----------
 
-
-
-# COMMAND ----------
-
 # MAGIC %md
 # MAGIC ## Deploy to Model Serving 
-# MAGIC
-# MAGIC - [AWS Resource](https://docs.databricks.com/en/machine-learning/model-serving/create-manage-serving-endpoints.html)
-# MAGIC - [Azure Resource](https://learn.microsoft.com/en-us/azure/databricks/machine-learning/model-serving/create-manage-serving-endpoints)
 
 # COMMAND ----------
 

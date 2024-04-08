@@ -37,6 +37,12 @@ import os
 import re
 from pyspark.sql.functions import udf
 
+import mlflow
+import mlflow.pyfunc
+from mlflow.models.signature import infer_signature
+
+mlflow.set_registry_uri('databricks-uc')
+
 os.environ['DATABRICKS_TOKEN'] = dbutils.notebook.entry_point.getDbutils().notebook().getContext().apiToken().get()
 os.environ['DATABRICKS_HOST'] = "https://" + spark.conf.get("spark.databricks.workspaceUrl")
 os.environ['TRANSFORMERS_CACHE'] = f"/dbfs/tmp/{user_name}/cache/hf"
@@ -199,8 +205,8 @@ display(llm_output_df.select("ProductId", "descriptions").limit(10))
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC ### Package Python Model for Deployment 
+# MAGIC %md 
+# MAGIC ## Package solution for Model Serving
 
 # COMMAND ----------
 
@@ -226,14 +232,29 @@ class CopyGenerationModel(mlflow.pyfunc.PythonModel):
 
 # COMMAND ----------
 
+reqs = ["git+https://github.com/huggingface/transformers","datasets", "accelerate==0.29.1","rouge-score"]
 mlflow.set_experiment(f"/Users/{user_name}/fine-tuning-t5")
-# last_run_id = mlflow.search_runs(filter_string="tags.mlflow.runName	= 't5-small-fine-tune-product_copy'")['run_id'].item()
+content_list = ["This is a input string for the model."]
+pdf = pd.DataFrame({'content': content_list})
+api_output = "This is an output description for a product."
 
-with mlflow.start_run():
+with mlflow.start_run(run_name = "rac_t5_small_fine_tune_product_copy"):
+  model_name = 'rac_t5_small_fine_tune_product_copy'
+  run = mlflow.active_run()
+  signature = infer_signature(pdf, api_output, None)
+
   mlflow.pyfunc.log_model(artifacts={"pipeline": "/tmp/t5-small-summary"}, 
-    artifact_path="copy_generator", 
+    artifact_path="rac_t5_small_fine_tune_product_copy", 
     python_model=CopyGenerationModel(),
-    registered_model_name="rac_t5_small_fine_tune_product_copy")
+    signature=signature, 
+    pip_requirements=reqs)
+  
+  model_uri = f"runs:/{run.info.run_id}/{model_name}"
+  mlflow.register_model(model_uri=model_uri, name=f"{catalog_name}.{schema_name}.rac_t5_small_fine_tune_product_copy", await_registration_for=600)
+
+# COMMAND ----------
+
+
 
 # COMMAND ----------
 
