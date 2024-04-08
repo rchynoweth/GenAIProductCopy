@@ -29,14 +29,22 @@ spark.conf.set("spark.databricks.delta.schema.autoMerge.enabled", "true")
 
 # COMMAND ----------
 
-dbrx_endpoint_url = f"<Databricks Workspace URL>/serving-endpoints/databricks-dbrx-instruct/invocations"
-dbtoken = "<PAT TOKEN - likely should just be secret>"
+import os
+dbrx_endpoint_url = "https://adb-984752964297111.11.azuredatabricks.net/serving-endpoints/rac_image_endpoint/invocations"
+dbtoken = os.environ.get('DATABRICKS_TOKEN')
 
 # COMMAND ----------
 
-data_path = "/Volumes/rac_demo_catalog/productcopy_demo/ecomm_product_images/"
-catalog_name = 'rac_demo_catalog'
-schema_name = 'productcopy_demo'
+# data_path = "/Volumes/rac_demo_catalog/productcopy_demo/ecomm_product_images/"
+# catalog_name = 'rac_demo_catalog'
+# schema_name = 'productcopy_demo'
+dbutils.widgets.text('data_path', '')
+dbutils.widgets.text('catalog_name', '')
+dbutils.widgets.text('schema_name', '')
+
+data_path = dbutils.widgets.get('data_path')
+catalog_name = dbutils.widgets.get('catalog_name')
+schema_name = dbutils.widgets.get('schema_name')
 
 # COMMAND ----------
 
@@ -66,9 +74,12 @@ def get_description(gender, productType, colour, category, subcategory, usage, p
 
   payload = {"messages": messages}
   headers = {"Content-Type": "application/json"}
-  response = requests.post(dbrx_endpoint_url, headers=headers, json=payload, auth=("token", dbtoken))
-  content = json.loads(response.content.decode('utf-8'))
-  return content.get('choices')[0].get('message').get('content')
+  try :
+    response = requests.post(dbrx_endpoint_url, headers=headers, json=payload, auth=("token", dbtoken))
+    content = json.loads(response.content.decode('utf-8'))
+    return content.get('choices')[0].get('message').get('content')
+  except :
+    return None
 
 # COMMAND ----------
 
