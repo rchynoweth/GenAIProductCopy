@@ -18,18 +18,21 @@ with open('imgs/31096.jpg', 'rb') as f:
     img_data = f.read()
 
 img_data_base64 = base64.b64encode(img_data).decode('utf-8')
-data = {'dataframe_records': [{'content': img_data_base64}] }
+data = {'dataframe_records': [{'content': img_data_base64}], 'client_request_id':'1' }
 
+import time 
 
-# Make the POST request
-response = requests.post(
-    MODEL_VERSION_URI,
-    auth=("token", DATABRICKS_API_TOKEN),
-    headers={"Content-Type": "application/json"},
-    json=data
-)
+for i in range(0,1000):
+    # Make the POST request
+    response = requests.post(
+        MODEL_VERSION_URI,
+        auth=("token", DATABRICKS_API_TOKEN),
+        headers={"Content-Type": "application/json"},
+        json=data
+    )
 
+    print(i)
+    # json.loads(response.content.decode('utf-8'))
 
-json.loads(response.content.decode('utf-8'))
-
-response.status_code
+    # response.status_code
+    time.sleep(0.25)

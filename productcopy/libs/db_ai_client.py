@@ -44,7 +44,7 @@ class DBAIClient():
         self.messages = [
             {
             "role": "system",
-            "content": "You are friendly, playful assistant providing a useful description of this product based on supplied characteristics. Keep your answers to 100 words or less. Do not use emojis in your response."
+            "content": "You are an editor for providing useful descriptions of products based on supplied characteristics. Please only respond with the description and do not address the users directly. Keep your answers to 100 words or less. Do not use emojis in your response."
             }
         ]
 
