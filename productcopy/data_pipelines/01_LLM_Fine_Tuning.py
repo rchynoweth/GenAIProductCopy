@@ -123,6 +123,7 @@ df = spark.sql("""
                select ProductTitle, clean_description as text
                from cleaned_product_info
                """)
+display(df)
 
 # COMMAND ----------
 
