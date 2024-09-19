@@ -79,7 +79,7 @@ def get_description(gender, productType, colour, category, subcategory, usage, p
     content = json.loads(response.content.decode('utf-8'))
     return content.get('choices')[0].get('message').get('content')
   except :
-    return None
+    return "This is a test description"
 
 # COMMAND ----------
 
@@ -101,7 +101,7 @@ images = (
     .format("binaryFile") # read file contents as binary
     .option("recursiveFileLookup", "true") # recursive navigation of folder structures
     .option("pathGlobFilter", "*.jpg") # read only files with jpg extension
-    .load(f"{data_path}/data") # starting point for accessing files
+    .load(f"{data_path}/*") # starting point for accessing files
   )
 
 # write images to persisted table
@@ -112,6 +112,7 @@ _ = (
     .format("delta")
     .saveAsTable("product_images")
 )
+
 
 # display data in table
 display(
@@ -138,7 +139,7 @@ info = (
     .format("csv")
     .option("header", True)
     .option("delimiter", ",")
-    .load(f"{data_path}/data/fashion.csv")
+    .load(f"{data_path}/fashion.csv")
     .withColumn('BaseProductDescription', desc_udf(col('Gender'), col('ProductType'), col('Colour'), col('Category'), col('Subcategory'), col('Usage'), col('ProductTitle')))
   ) 
 
@@ -157,7 +158,7 @@ _= (
     .withColumn('path', 
                   concat(
                   lit('dbfs:'),
-                  lit(f"{data_path}/data/"), 
+                  lit(f"{data_path}/"), 
                   'category', lit("/"),
                   'gender', lit("/"),
                   lit("Images/images_with_product_ids/"),
@@ -171,10 +172,27 @@ _= (
       .saveAsTable("product_info")
 )
 
+
 # review data in table
 display(
   spark.table('product_info')
   )
+
+# COMMAND ----------
+
+spark.sql("drop table if exists product_info_desc")
+
+# generate desc for tuning
+(spark.sql(f"""
+           select * 
+           , ai_gen(concat('Do not use emojis. Write a product description with the following product title:', ProductTitle)) as BaseProductDescription2
+           from product_info
+           limit 100
+           """)
+ .write
+ .mode('overwrite')
+ .saveAsTable("product_info_desc")
+ )
 
 # COMMAND ----------
 

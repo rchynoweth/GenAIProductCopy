@@ -35,7 +35,7 @@ user_name
 
 import os
 import re
-from pyspark.sql.functions import udf
+from pyspark.sql.functions import udf, col
 
 import mlflow
 import mlflow.pyfunc
@@ -73,7 +73,7 @@ spark.sql(f"use schema {schema_name}")
 # COMMAND ----------
 
 product_info_df = spark.read.table('product_info')
-display(product_info_df)
+display(spark.read.table('product_info_desc'))
 
 # COMMAND ----------
 
@@ -104,9 +104,7 @@ def clean_text_udf(text):
 
 # Pick examples that are longer
 clean_product_info = (product_info_df
-  .withColumn("clean_description", clean_text_udf("BaseProductDescription"))
-  .filter("LENGTH(clean_description) > 0 AND LENGTH(clean_description) > 0")
-
+  .withColumn("clean_description", col("BaseProductDescription"))
 )
 
 # write data out
@@ -123,7 +121,7 @@ df = spark.sql("""
                select ProductTitle, clean_description as text
                from cleaned_product_info
                """)
-display(df)
+# display(df)
 
 # COMMAND ----------
 

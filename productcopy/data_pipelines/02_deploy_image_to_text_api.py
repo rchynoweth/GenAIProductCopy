@@ -28,6 +28,7 @@ schema_name = dbutils.widgets.get('schema_name')
 # COMMAND ----------
 
 spark.sql(f"use catalog {catalog_name}")
+spark.sql(f"create schema if not exists {schema_name}")
 spark.sql(f"use schema {schema_name}")
 
 # COMMAND ----------
@@ -76,7 +77,7 @@ if cnt > 0:
       .format("binaryFile") # read file contents as binary
       .option("recursiveFileLookup", "true") # recursive navigation of folder structures
       .option("pathGlobFilter", "*.jpg") # read only files with jpg extension
-      .load(f"{data_path}/data") # starting point for accessing files
+      .load(f"{data_path}/*") # starting point for accessing files
     )
 
   # write images to persisted table
@@ -233,10 +234,6 @@ class ImageToTextModel(mlflow.pyfunc.PythonModel):
 
 
 
-
-# COMMAND ----------
-
-# maybe add an evaluation table here to compare the different descriptions. "MLflow Evaluation" for reference code. 
 
 # COMMAND ----------
 
